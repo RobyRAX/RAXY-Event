@@ -9,7 +9,7 @@ using UnityEditor;
 
 namespace RAXY.Event
 {
-    public abstract class EventBaseSO : ScriptableObject
+    public abstract class EventBaseSO : ScriptableObject, IClearableEvent
     {
         public event Action Event;
 
@@ -60,7 +60,7 @@ namespace RAXY.Event
 #endif
     }
 
-    public abstract class EventBaseSO<T> : ScriptableObject
+    public abstract class EventBaseSO<T> : ScriptableObject, IClearableEvent
     {
         public event Action<T> Event;
 
@@ -116,6 +116,11 @@ namespace RAXY.Event
             _delegatesDrawer.SetDelegates(list);
         }
 #endif
+    }
+
+    public interface IClearableEvent
+    {
+        public void ClearAllListeners();
     }
 
 #if UNITY_EDITOR
