@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -30,7 +31,7 @@ namespace RAXY.Event
         public float floatParam;
 
         [VerticalGroup("Row/Left")]
-        [ShowIf("@primitiveType == PrimitiveType.Bool")]
+        [HideLabel, ShowIf("@primitiveType == PrimitiveType.Bool")]
         public BoolEventSO boolEventSO;
 
         [VerticalGroup("Row/Left")]
@@ -44,6 +45,17 @@ namespace RAXY.Event
         [VerticalGroup("Row/Left")]
         [ShowIf("@primitiveType == PrimitiveType.String")]
         public string stringParam;
+
+        [VerticalGroup("Row/Left")]
+        [HideLabel, ShowIf("@primitiveType == PrimitiveType.NoParam")]
+        public EventSO noParamEventSO;
+
+        [VerticalGroup("Row/Left")]
+        [ShowIf("@primitiveType == PrimitiveType.NoParam")]
+        [DisplayAsString]
+        [HideLabel]
+        [ShowInInspector]
+        const string NO_PARAM = "No Parameter";
 
         // ───────────────────────────────────────────────
         // Button on the right side
@@ -65,12 +77,23 @@ namespace RAXY.Event
                 case PrimitiveType.String:
                     stringEventSO?.Raise(stringParam);
                     break;
+                case PrimitiveType.NoParam:
+                    noParamEventSO?.Raise();
+                    break;
+            }
+        }
+
+        public static void RaiseList(List<PrimitiveEventRaiser> raisers)
+        {
+            foreach (var raiser in raisers)
+            {
+                raiser.Raise();
             }
         }
     }
 
     public enum PrimitiveType
     {
-        Integer, Float, Bool, String
+        Integer, Float, Bool, String, NoParam
     }
 }

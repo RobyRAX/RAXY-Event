@@ -9,118 +9,28 @@ using UnityEditor;
 
 namespace RAXY.Event
 {
-    public abstract class EventBaseSO : ScriptableObject, IClearableEvent
+    public abstract class EventBaseSO : ScriptableObject
     {
-        public event Action Event;
-
 #if UNITY_EDITOR
         [TitleGroup("Listeners")]
         [ShowInInspector, HideReferenceObjectPicker, HideLabel]
-        private DelegatesDrawer _delegatesDrawer = new();
+        protected DelegatesDrawer _delegatesDrawer = new();
 #endif
 
-        public virtual void Subscribe(Action action)
-        {
-            Event += action;
-#if UNITY_EDITOR
-            RefreshVisualizer();
-#endif
-        }
-
-        public virtual void Unsubscribe(Action action)
-        {
-            Event -= action;
-#if UNITY_EDITOR
-            RefreshVisualizer();
-#endif
-        }
-
-        public virtual void Raise()
-        {
-            Event?.Invoke();
-        }
-
-        public virtual void ClearAllListeners()
-        {
-            Event = null;
-#if UNITY_EDITOR
-            RefreshVisualizer();
-#endif
-        }
+        public abstract void ClearAllListeners();
 
 #if UNITY_EDITOR
-        private void RefreshVisualizer()
+        protected abstract Delegate[] GetDelegates();
+
+        protected void RefreshVisualizer()
         {
             if (_delegatesDrawer == null)
                 _delegatesDrawer = new DelegatesDrawer();
 
-            var list = Event?.GetInvocationList() ?? Array.Empty<Delegate>();
-            _delegatesDrawer.SetDelegates(list);
+            _delegatesDrawer.SetDelegates(GetDelegates());
         }
 #endif
-    }
-
-    public abstract class EventBaseSO<T> : ScriptableObject, IClearableEvent
-    {
-        public event Action<T> Event;
-
-        [ShowInInspector]
-        [ReadOnly]
-        [TitleGroup("Status")]
-        [HideLabel]
-        protected T _currentParam;
-
-#if UNITY_EDITOR
-        [TitleGroup("Listeners")]
-        [ShowInInspector, HideReferenceObjectPicker, HideLabel]
-        private DelegatesDrawer _delegatesDrawer = new();
-#endif
-
-        public virtual void Subscribe(Action<T> action)
-        {
-            Event += action;
-#if UNITY_EDITOR
-            RefreshVisualizer();
-#endif
-        }
-
-        public virtual void Unsubscribe(Action<T> action)
-        {
-            Event -= action;
-#if UNITY_EDITOR
-            RefreshVisualizer();
-#endif
-        }
-
-        public virtual void Raise(T param)
-        {
-            _currentParam = param;
-            Event?.Invoke(_currentParam);
-        }
-
-        public virtual void ClearAllListeners()
-        {
-            Event = null;
-#if UNITY_EDITOR
-            RefreshVisualizer();
-#endif
-        }
-
-#if UNITY_EDITOR
-        private void RefreshVisualizer()
-        {
-            if (_delegatesDrawer == null)
-                _delegatesDrawer = new DelegatesDrawer();
-
-            var list = Event?.GetInvocationList() ?? Array.Empty<Delegate>();
-            _delegatesDrawer.SetDelegates(list);
-        }
-#endif
-    }
-
-    public interface IClearableEvent
-    {
-        public void ClearAllListeners();
+        public abstract void Raise();
     }
 
 #if UNITY_EDITOR

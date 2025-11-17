@@ -13,7 +13,7 @@ namespace RAXY.Event
 #if UNITY_EDITOR
         [TitleGroup("All Event SO")]
         [ShowInInspector, ReadOnly]
-        private List<IClearableEvent> _allEventSOs = new();
+        private List<EventBaseSO> _allEventSOs = new();
 
         [HorizontalGroup("All Event SO/Op")]
         [Button("Find All")]
@@ -21,11 +21,11 @@ namespace RAXY.Event
         {
             _allEventSOs.Clear();
 
-            string[] guids = AssetDatabase.FindAssets("t:InputActionEventSO");
+            string[] guids = AssetDatabase.FindAssets("t:EventBaseSO");
             foreach (string guid in guids)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
-                IClearableEvent so = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path) as IClearableEvent;
+                EventBaseSO so = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path) as EventBaseSO;
                 if (so != null)
                     _allEventSOs.Add(so);
             }
