@@ -63,6 +63,11 @@ namespace RAXY.Event
         [HideLabel]
         protected T _currentParam;
 
+        public virtual void ResetParam()
+        {
+            _currentParam = default;
+        }
+
         public virtual void Subscribe(Action<T> action)
         {
             Event += action;
