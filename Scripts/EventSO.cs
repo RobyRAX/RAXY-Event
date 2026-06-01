@@ -19,6 +19,7 @@ namespace RAXY.Event
         public virtual void Subscribe(Action action)
         {
             Event += action;
+            //Debug.Log("Subscribe -> " + GetInstanceID());
 #if UNITY_EDITOR
             RefreshVisualizer();
 #endif
@@ -34,6 +35,7 @@ namespace RAXY.Event
 
         public override void Raise()
         {
+            //Debug.Log("Raise -> " + GetInstanceID());
             Event?.Invoke();
         }
 
@@ -71,6 +73,7 @@ namespace RAXY.Event
         public virtual void Subscribe(Action<T> action)
         {
             Event += action;
+            //Debug.Log("Subscribe -> " + GetInstanceID());
 #if UNITY_EDITOR
             RefreshVisualizer();
 #endif
@@ -79,6 +82,7 @@ namespace RAXY.Event
         public virtual void Unsubscribe(Action<T> action)
         {
             Event -= action;
+            //Debug.Log("Unsubscribe -> " + GetInstanceID());
 #if UNITY_EDITOR
             RefreshVisualizer();
 #endif
@@ -90,18 +94,21 @@ namespace RAXY.Event
         public override void Raise()
         {
             _currentParam = default;
+            //Debug.Log("Raise -> " + GetInstanceID());
             Event?.Invoke(_currentParam);
         }
 
         public virtual void Raise(T param)
         {
             _currentParam = param;
+            //Debug.Log("Raise -> " + GetInstanceID());
             Event?.Invoke(_currentParam);
         }
 
         public override void ClearAllListeners()
         {
             Event = null;
+            //Debug.Log("Clear -> " + GetInstanceID());
 #if UNITY_EDITOR
             RefreshVisualizer();
 #endif
