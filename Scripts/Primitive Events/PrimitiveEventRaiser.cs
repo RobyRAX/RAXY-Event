@@ -13,6 +13,10 @@ namespace RAXY.Event
         public PrimitiveType primitiveType;
 
         // Shared row layout: left (fields), right (button)
+        [VerticalGroup("Row/Left")]
+        [HideLabel, ShowIf("@primitiveType == PrimitiveType.NoParam")]
+        public EventSO noParamEventSO;
+        
         [HorizontalGroup("Row", Width = 0.8f)]
         [VerticalGroup("Row/Left")]
         [HideLabel, ShowIf("@primitiveType == PrimitiveType.Integer")]
@@ -47,8 +51,21 @@ namespace RAXY.Event
         public string stringParam;
 
         [VerticalGroup("Row/Left")]
-        [HideLabel, ShowIf("@primitiveType == PrimitiveType.NoParam")]
-        public EventSO noParamEventSO;
+        [HideLabel, ShowIf("@primitiveType == PrimitiveType.Vector2")]
+        public Vector2EventSO vector2EventSO;
+
+        [VerticalGroup("Row/Left")]
+        [ShowIf("@primitiveType == PrimitiveType.Vector2")]
+        public Vector2 vector2Param;
+
+        [VerticalGroup("Row/Left")]
+        [HideLabel, ShowIf("@primitiveType == PrimitiveType.String2")]
+        public String2EventSO string2EventSO;
+
+        [VerticalGroup("Row/Left")]
+        [ShowIf("@primitiveType == PrimitiveType.String2")]
+        [HideLabel]
+        public String2 string2Param;
 
         [VerticalGroup("Row/Left")]
         [ShowIf("@primitiveType == PrimitiveType.NoParam")]
@@ -65,6 +82,9 @@ namespace RAXY.Event
         {
             switch (primitiveType)
             {
+                case PrimitiveType.NoParam:
+                    noParamEventSO?.Raise();
+                    break;
                 case PrimitiveType.Integer:
                     integerEventSO?.Raise(integerParam);
                     break;
@@ -77,8 +97,11 @@ namespace RAXY.Event
                 case PrimitiveType.String:
                     stringEventSO?.Raise(stringParam);
                     break;
-                case PrimitiveType.NoParam:
-                    noParamEventSO?.Raise();
+                case PrimitiveType.Vector2:
+                    vector2EventSO?.Raise(vector2Param);
+                    break;
+                case PrimitiveType.String2:
+                    string2EventSO?.Raise(string2Param);
                     break;
             }
         }
@@ -94,6 +117,12 @@ namespace RAXY.Event
 
     public enum PrimitiveType
     {
-        Integer, Float, Bool, String, NoParam
+        NoParam = 0,
+        Integer = 1,
+        Float = 2, 
+        Bool = 3, 
+        String = 4, 
+        Vector2 = 5, 
+        String2 = 6, 
     }
 }
