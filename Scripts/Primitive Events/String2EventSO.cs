@@ -5,7 +5,7 @@ using UnityEngine;
 namespace RAXY.Event
 {
     [CreateAssetMenu(menuName = "RAXY/Event System/Primitive/String2")]
-    public class String2EventSO : PrimitiveEventBaseSO<String2>
+    public class String2EventSO : EventSO<String2>
     {
     }
 

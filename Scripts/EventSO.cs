@@ -7,6 +7,9 @@ namespace RAXY.Event
     [CreateAssetMenu(menuName = "RAXY/Event System/Event")]
     public class EventSO : EventBaseSO
     {
+        public override bool HasParameter => false;
+        public override Type ParameterType => null;
+
         public event Action Event;
 
 #if UNITY_EDITOR
@@ -33,10 +36,15 @@ namespace RAXY.Event
 #endif
         }
 
-        public override void Raise()
+        public void Raise()
         {
             //Debug.Log("Raise -> " + GetInstanceID());
             Event?.Invoke();
+        }
+
+        public override void Raise(object parameter = null)
+        {
+            Raise();
         }
 
         public override void ClearAllListeners()
@@ -48,7 +56,7 @@ namespace RAXY.Event
         }
     }
 
-    public abstract class EventSO<T> : EventBaseSO
+    public class EventSO<T> : EventBaseSO
     {
         public event Action<T> Event;
 
@@ -64,6 +72,9 @@ namespace RAXY.Event
         [TitleGroup("Status")]
         [HideLabel]
         protected T _currentParam;
+
+        public override bool HasParameter => true;
+        public override Type ParameterType => typeof(T);
 
         public virtual void ResetParam()
         {
@@ -88,21 +99,16 @@ namespace RAXY.Event
 #endif
         }
 
-        /// <summary>
-        /// Will raise the event with 'default' argument
-        /// </summary>
-        public override void Raise()
-        {
-            _currentParam = default;
-            //Debug.Log("Raise -> " + GetInstanceID());
-            Event?.Invoke(_currentParam);
-        }
-
         public virtual void Raise(T param)
         {
             _currentParam = param;
             //Debug.Log("Raise -> " + GetInstanceID());
             Event?.Invoke(_currentParam);
+        }
+
+        public override void Raise(object parameter = null)
+        {
+            Raise((T)parameter);
         }
 
         public override void ClearAllListeners()

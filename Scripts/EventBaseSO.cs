@@ -11,6 +11,9 @@ namespace RAXY.Event
 {
     public abstract class EventBaseSO : ScriptableObject
     {
+        public abstract bool HasParameter { get; }
+        public abstract Type ParameterType { get; }
+
 #if UNITY_EDITOR
         [TitleGroup("Listeners")]
         [ShowInInspector, HideReferenceObjectPicker, HideLabel]
@@ -18,6 +21,7 @@ namespace RAXY.Event
 #endif
 
         public abstract void ClearAllListeners();
+        public abstract void Raise(object parameter = null);
 
 #if UNITY_EDITOR
         protected abstract Delegate[] GetDelegates();
@@ -30,7 +34,6 @@ namespace RAXY.Event
             _delegatesDrawer.SetDelegates(GetDelegates());
         }
 #endif
-        public abstract void Raise();
     }
 
 #if UNITY_EDITOR
