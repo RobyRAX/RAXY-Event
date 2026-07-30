@@ -67,7 +67,7 @@ namespace RAXY.Event
             }
         }
 
-        [Button]
+        //[Button]
         public void Raise()
         {
             eventSO?.Raise(parameter);
