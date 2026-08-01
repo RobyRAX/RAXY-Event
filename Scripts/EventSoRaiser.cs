@@ -1,13 +1,31 @@
 using System;
+using System.Reflection;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace RAXY.Event
 {
+    /// <summary>
+    /// Unity [SerializeReference] cannot persist System.String or value types.
+    /// This box wraps them so EventSoRaiser parameters survive domain reload / reopening Unity.
+    /// </summary>
     [Serializable]
-    public class EventSoRaiser
+    public class EventParamBox<T>
     {
-        bool IsNoParam => eventSO is EventSO;
+        [HideLabel]
+        public T value;
+
+        public EventParamBox() { }
+
+        public EventParamBox(T value)
+        {
+            this.value = value;
+        }
+    }
+
+    [Serializable]
+    public class EventSoRaiser : ISerializationCallbackReceiver
+    {
         bool IsWithParam => eventSO is not null and not EventSO;
 
         [HorizontalGroup]
@@ -20,7 +38,17 @@ namespace RAXY.Event
         [LabelText("@ParameterTypeName")]
         public object parameter;
 
-        string ParameterTypeName => parameter?.GetType().GetCSharpName() ?? "None";
+        string ParameterTypeName
+        {
+            get
+            {
+                Type type = eventSO != null && eventSO.HasParameter
+                    ? eventSO.ParameterType
+                    : GetBoxedValueType(parameter);
+
+                return type?.GetCSharpName() ?? "None";
+            }
+        }
 
         [HorizontalGroup(0.15f)]
         [ShowIf("IsWithParam")]
@@ -37,40 +65,121 @@ namespace RAXY.Event
             }
 
             Type paramType = eventSO.ParameterType;
+            Type storageType = GetStorageType(paramType);
 
             // Sudah sesuai tipenya, tidak perlu dibuat ulang.
-            if (parameter != null && parameter.GetType() == paramType)
+            if (parameter != null && parameter.GetType() == storageType)
                 return;
 
-            // string tidak punya default ctor
-            if (paramType == typeof(string))
-            {
-                parameter = string.Empty;
-            }
-            // Value type (int, float, bool, Vector3, dll)
-            else if (paramType.IsValueType)
-            {
-                parameter = Activator.CreateInstance(paramType);
-            }
-            // Reference type
-            else
-            {
-                try
-                {
-                    parameter = Activator.CreateInstance(paramType);
-                }
-                catch
-                {
-                    // Misalnya abstract class atau tidak punya ctor kosong.
-                    parameter = null;
-                }
-            }
+            object previousValue = Unwrap(parameter);
+            parameter = CreateStorage(paramType, previousValue);
         }
 
         //[Button]
         public void Raise()
         {
-            eventSO?.Raise(parameter);
+            eventSO?.Raise(Unwrap(parameter));
+        }
+
+        public void OnBeforeSerialize()
+        {
+            EnsureParameterStorage();
+        }
+
+        public void OnAfterDeserialize()
+        {
+            EnsureParameterStorage();
+        }
+
+        void EnsureParameterStorage()
+        {
+            if (eventSO == null || !eventSO.HasParameter)
+                return;
+
+            Type paramType = eventSO.ParameterType;
+            if (paramType == null)
+                return;
+
+            Type storageType = GetStorageType(paramType);
+            if (parameter != null && parameter.GetType() == storageType)
+                return;
+
+            // Migrate raw string / boxed value types (or null) into a serializable box.
+            if (RequiresBox(paramType))
+            {
+                parameter = CreateStorage(paramType, Unwrap(parameter));
+                return;
+            }
+
+            // Reference types that somehow became null stay null until Refresh.
+        }
+
+        static bool RequiresBox(Type paramType)
+        {
+            return paramType == typeof(string) || paramType.IsValueType;
+        }
+
+        static Type GetStorageType(Type paramType)
+        {
+            return RequiresBox(paramType)
+                ? typeof(EventParamBox<>).MakeGenericType(paramType)
+                : paramType;
+        }
+
+        static object CreateStorage(Type paramType, object previousValue)
+        {
+            if (RequiresBox(paramType))
+            {
+                Type boxType = typeof(EventParamBox<>).MakeGenericType(paramType);
+                object box = Activator.CreateInstance(boxType);
+                FieldInfo valueField = boxType.GetField(nameof(EventParamBox<object>.value));
+
+                if (previousValue != null && paramType.IsInstanceOfType(previousValue))
+                    valueField.SetValue(box, previousValue);
+                else if (paramType == typeof(string))
+                    valueField.SetValue(box, string.Empty);
+                else if (paramType.IsValueType)
+                    valueField.SetValue(box, Activator.CreateInstance(paramType));
+
+                return box;
+            }
+
+            if (previousValue != null && paramType.IsInstanceOfType(previousValue))
+                return previousValue;
+
+            try
+            {
+                return Activator.CreateInstance(paramType);
+            }
+            catch
+            {
+                // Abstract class / no parameterless ctor.
+                return null;
+            }
+        }
+
+        static object Unwrap(object stored)
+        {
+            if (stored == null)
+                return null;
+
+            Type type = stored.GetType();
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(EventParamBox<>))
+                return type.GetField(nameof(EventParamBox<object>.value)).GetValue(stored);
+
+            return stored;
+        }
+
+        static Type GetBoxedValueType(object stored)
+        {
+            if (stored == null)
+                return null;
+
+            Type type = stored.GetType();
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(EventParamBox<>))
+                return type.GetGenericArguments()[0];
+
+            return type;
         }
     }
 
