@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -54,10 +55,22 @@ namespace RAXY.Event
             RefreshVisualizer();
 #endif
         }
+
+        protected override void SubscribeActionInternal(Action listener)
+        {
+            Subscribe(listener);
+        }
+
+        protected override void UnsubscribeActionInternal(Action listener)
+        {
+            Unsubscribe(listener);
+        }
     }
 
     public class EventSO<T> : EventBaseSO
     {
+        readonly Dictionary<Action, Action<T>> actionWrappers = new();
+
         public event Action<T> Event;
 
 #if UNITY_EDITOR
@@ -114,10 +127,30 @@ namespace RAXY.Event
         public override void ClearAllListeners()
         {
             Event = null;
-            //Debug.Log("Clear -> " + GetInstanceID());
+            actionWrappers.Clear();
 #if UNITY_EDITOR
             RefreshVisualizer();
 #endif
+        }
+
+        protected override void SubscribeActionInternal(Action listener)
+        {
+            if (!actionWrappers.TryGetValue(listener, out var wrapper))
+            {
+                wrapper = _ => listener();
+                actionWrappers[listener] = wrapper;
+            }
+
+            Subscribe(wrapper);
+        }
+
+        protected override void UnsubscribeActionInternal(Action listener)
+        {
+            if (!actionWrappers.TryGetValue(listener, out var wrapper))
+                return;
+
+            Unsubscribe(wrapper);
+            actionWrappers.Remove(listener);
         }
     }
 }

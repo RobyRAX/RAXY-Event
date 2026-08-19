@@ -23,6 +23,25 @@ namespace RAXY.Event
         public abstract void ClearAllListeners();
         public abstract void Raise(object parameter = null);
 
+        public void SubscribeAction(Action listener)
+        {
+            if (listener == null)
+                return;
+
+            SubscribeActionInternal(listener);
+        }
+
+        public void UnsubscribeAction(Action listener)
+        {
+            if (listener == null)
+                return;
+
+            UnsubscribeActionInternal(listener);
+        }
+
+        protected abstract void SubscribeActionInternal(Action listener);
+        protected abstract void UnsubscribeActionInternal(Action listener);
+
 #if UNITY_EDITOR
         protected abstract Delegate[] GetDelegates();
 
@@ -41,9 +60,6 @@ namespace RAXY.Event
     public class DelegatesDrawer
     {
         private Delegate[] _delegates = Array.Empty<Delegate>();
-
-        [ShowInInspector, ReadOnly, LabelText("Listener Count")]
-        private int ListenerCount => _delegates?.Length ?? 0;
 
         [ShowInInspector, ReadOnly, LabelText("Active Listeners")]
         [ListDrawerSettings(HideAddButton = true, HideRemoveButton = true, DraggableItems = false)]
